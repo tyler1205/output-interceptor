@@ -10,8 +10,10 @@ import type {
   OutputInterceptorUserConfigurationType,
 } from '../types';
 
-const originalStderrWrite = process.stderr.write.bind(process.stderr);
-const originalStdoutWrite = process.stdout.write.bind(process.stdout);
+// Later we'll use call instead of bind here, so we can return the fn unmutated when we're finished,
+// any prior "this" handling will be left untouched.
+const originalStderrWrite = process.stderr.write;
+const originalStdoutWrite = process.stdout.write;
 
 export default (userConfiguration?: OutputInterceptorUserConfigurationType): OutputInterceptorType => {
   // $FlowFixMe
@@ -22,7 +24,8 @@ export default (userConfiguration?: OutputInterceptorUserConfigurationType): Out
       domain.outputInterceptor.output += chunk;
     }
 
-    return originalStderrWrite(chunk, encoding, callback);
+    // use call instead of bind, so we can return process.stderr unmutated
+    return originalStderrWrite.call(process.stderr, chunk, encoding, callback);
   };
 
   // $FlowFixMe
@@ -33,7 +36,8 @@ export default (userConfiguration?: OutputInterceptorUserConfigurationType): Out
       domain.outputInterceptor.output += chunk;
     }
 
-    return originalStdoutWrite(chunk, encoding, callback);
+    // use call instead of bind, so we can return process.stdout unmutated
+    return originalStdoutWrite.call(process.stdout, chunk, encoding, callback);
   };
 
   const interceptor = async (routine) => {
